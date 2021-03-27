@@ -1,0 +1,23 @@
+---
+title: "Visualización de datos del Covid-19"
+author: "Bryan Velicka Leka y Franco Manuel García Dos Santos"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+
+## Introducción
+
+En este documento analizaremos y visualizaremos datos sobre el covid tomados hasta la fecha.
+
+## 1. Preprocesado
+
+###    Ejercicio 1
+
+
+## 2. Visualizado
+
+
