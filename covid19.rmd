@@ -16,7 +16,7 @@ En este documento analizaremos y visualizaremos datos sobre el covid tomados has
 ## 1. Preprocesado
 
 ###    Ejercicio 1
-
+#nuevo
 
 ## 2. Visualizado
 
