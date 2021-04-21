@@ -9,29 +9,35 @@ output:
 ---
 
 
-## Introducción
+## ------------------------ Introducción ------------------------ ##
 
-En este documento analizaremos y visualizaremos datos sobre el covid tomados hasta la fecha.
+En este documento preprocesaremos, analizaremos y visualizaremos datos sobre el covid-19 tomados hasta la fecha.
 
-## Paso 1 --> Preprocesado
 
-#1.  
+## ------------------------ Paso 1 --> Preprocesado ------------------------ ##
+
+#1. Paquetes y librerias que vamos a utilizar. Importamos dataset covid_19_data.csv
 ```{r}
+install.packages("ggthemes")
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
+library(ggthemes)
 library(readr)
 covid_19_data <- read_csv("covid_19_data.csv")
 #View(covid_19_data)
 
 ```
 
-#2.
+#2. Seleccion de columnas y primeras transformaciones
 ```{r}
-
+#Solo nos quedamos con las columnas 'ObservationDate', 'Country/Region', 'Confirmed', 'Deaths' y 'Recovery'
 datacovid19 <- covid_19_data %>%
                  select(-c(1,3,5))
 
+covid_19_data %>% filter( `Country/Region`=="Spain")
+
+#Transformo los valores de la columna 'Pais-Region': "Mainland China" lo transformo a "China", y "occupied Palestinian territory" a "Palestina".
 ind_c <- which(datacovid19$`Country/Region`=="Mainland China")
 ind_p <- which(datacovid19$`Country/Region`=="occupied Palestinian territory")
 
@@ -40,19 +46,16 @@ datacovid19$`Country/Region`[ind_p] <- "Palestina"
 
 datacovid19
 
+#Agrupo por 'Pais-Region' y 'ObservationDate' y calculo la cuenta de confirmados, muertos y recuperados por dia
 datacovid19_por_dia <- datacovid19 %>%
                        group_by(`Country/Region`, ObservationDate) %>%
                        summarise_at(c("Confirmed", "Deaths", "Recovered"), sum)
 
-#datacovid19_por_dia <- datacovid19 %>%
-#                       group_by(`Country/Region`, ObservationDate) %>%
-#                       summarise_all(list(sum))
-
 ```
 
-#3.
+#3.Conversión de la columna 'ObservationDate' en columna llamada 'Date' (tipo Date). Obtener los datos del covid en España
 ```{r}
-
+#Esta función separa el dia, mes y año y convierte 'ObservationDate' a tipo Date. Devuelve el dataset con dicha columna ya convertida y las columnas extras
 convertir_a_fecha <- function(ds){
   
   getAño <- function(x){
@@ -70,44 +73,111 @@ convertir_a_fecha <- function(ds){
   ds$dia <- sapply(ds$ObservationDate, getDia)
 
   ds$ObservationDate <- 
-      as.Date( paste(ds$año,"-",ds$mes,"-",ds$dia, sep = "") , "%Y-%m-%d")
+      as.Date( paste(ds$año,ds$mes,ds$dia, sep = "-") , "%Y-%m-%d")
   
-  ds_with_date <- ds
-  
-  return(ds_with_date)
+  return(ds)
   
 }
 
 #------------------------------------------------------------------------#
-
+#Nos quedamos con los datos del covid en España
 datacovid19_por_dia_Spain <- datacovid19_por_dia %>%
                             filter( `Country/Region`=="Spain" )
 
+#Convertimos la columna 'ObservationDate' a tipo Date
 datacovid19_por_dia_Spain <- convertir_a_fecha(datacovid19_por_dia_Spain)
 
+#Agrupamos y ordenamos por Fecha y eliminamos columnas que no nos interesan
 datacovid19_por_dia_Spain <- datacovid19_por_dia_Spain %>%
-  group_by(ObservationDate) %>%
-  arrange(ObservationDate) %>%
-  select(-c(1,6,7,8))
+                             group_by(ObservationDate) %>%
+                             arrange(ObservationDate) %>%
+                             select(-c(1,6,7,8))
 
-names(datacovid19_por_dia_Spain)[1] <- "Date"
+#Renombramos nombre de columnas para mayor facilidad
+names(datacovid19_por_dia_Spain)[1:4] <- c("Date","Confirmados","Fallecimientos","Recuperados")
 
 datacovid19_por_dia_Spain
 
 ```
 
 
-## Paso 2 --> Visualización
+## ------------------------ Paso 2 --> Visualización ------------------------ ##
 
-#1. Visualizar las defunciones, los casos confirmados, y los recuperados por día (acumulados)
+#1. Visualizar las defunciones, los casos confirmados, y los recuperados por día en España (acumulados)
 ```{r}
+g1 <- ggplot(datacovid19_por_dia_Spain)
+g1 + geom_line(aes(x=Date, y=Fallecimientos), color="red") + 
+  labs(x = "Fecha", y="Fallecimientos") + 
+  ggtitle("COVID-19 en España - Defunciones", "Acumulados") + 
+  theme_clean() + 
+  theme( axis.title = element_text(size = 10, face = "bold") )
 
-g1 <- ggplot(datacovid19_por_dia_Spain, aes(x=Date, y=Deaths))
-g1 + geom_line()
+g2 <- ggplot(datacovid19_por_dia_Spain)
+g2 + geom_line(aes(x=Date, y=Confirmados), color="blue") + 
+  labs(x = "Fecha", y="Confirmados") + 
+  ggtitle("COVID-19 en España - Casos confirmados", "Acumulados") + 
+  theme_grey() + 
+  theme( axis.title = element_text(size = 10, face = "bold") )
 
+
+g3 <- ggplot(datacovid19_por_dia_Spain)
+g3 + geom_line(aes(x=Date, y=Recuperados), color="green") + 
+  labs(x = "Fecha", y="Recuperados") + 
+  ggtitle("COVID-19 en España - Recuperados", "Acumulados") + 
+  theme_bw() + 
+  theme( axis.title = element_text(size = 10, face = "bold") )
+
+```
+
+#2. Visualizar los casos acumulados en cada mes desde que comenzó la pandemia en China.
+```{r}
+datacovid19_por_dia_China <- datacovid19_por_dia %>%
+                            filter( `Country/Region`=="China" )
+
+
+datacovid19_por_dia_China <- convertir_a_fecha(datacovid19_por_dia_China)
+
+datacovid19_por_dia_China <- datacovid19_por_dia_China %>%
+    group_by(año, mes) %>%
+    arrange(año) %>%
+    summarise(Confirmed = tail(Confirmed,1))
+  
+g4 <- ggplot(datacovid19_por_dia_China,aes(x=interaction(mes,año), y=Confirmed))
+g4 + geom_bar(stat="identity", fill="lightblue", colour="black") +
+geom_text(aes(label=Confirmed), vjust=-0.3, colour="black", size = 3.5) + theme_classic() + 
+ggtitle("COVID-19 en China - Casos confirmados", "Acumulados cada mes") +
+labs(x = "Mes/Año", y="Confirmados") +
+theme(axis.text.x = element_text(angle = 90, vjust = 0.5), 
+      axis.title = element_text(size = 10, face = "bold") )
 
 
 ```
 
+#prueba
+```{r}
+pr <- datacovid19_por_dia_Spain %>%
+  filter(Date < "2020-06-01")
+
+length(pr$Fallecimientos)
+
+pr$prueba <- 0
+
+for(i in 2:length(pr$Fallecimientos)) {
+  
+  pr$prueba[i] = pr$Fallecimientos[i]-pr$Fallecimientos[i-1]
+  
+}
+
+g1 <- ggplot(pr)
+g1 + geom_line(aes(x=Date, y=prueba), color="red") + 
+  labs(x = "Fecha", y="Fallecimientos") + 
+  ggtitle("COVID-19 en España - Defunciones") + 
+  theme_clean() + 
+  theme( axis.title = element_text(size = 10, face = "bold") )
+
+
+  
+  
+```
 
 
