@@ -36,8 +36,6 @@ covid_19_data <- read_csv("covid_19_data.csv")
 datacovid19 <- covid_19_data %>%
                  select(-c(1,3,5))
 
-covid_19_data %>% filter( `Country/Region`=="Spain")
-
 #Transformo los valores de la columna 'Pais-Region': "Mainland China" lo transformo a "China", y "occupied Palestinian territory" a "Palestina".
 ind_c <- which(datacovid19$`Country/Region`=="Mainland China")
 ind_p <- which(datacovid19$`Country/Region`=="occupied Palestinian territory")
@@ -51,6 +49,8 @@ datacovid19
 datacovid19_por_dia <- datacovid19 %>%
                        group_by(`Country/Region`, ObservationDate) %>%
                        summarise_at(c("Confirmed", "Deaths", "Recovered"), sum)
+
+datacovid19_por_dia
 
 ```
 
@@ -95,7 +95,8 @@ datacovid19_por_dia_Spain <- datacovid19_por_dia_Spain %>%
                              select(-c(1,6,7,8))
 
 #Renombramos nombre de columnas para mayor facilidad
-names(datacovid19_por_dia_Spain)[1:4] <- c("Date","Confirmados","Fallecimientos","Recuperados")
+names(datacovid19_por_dia_Spain)[1:4] <-
+c("Date","Confirmados","Fallecimientos","Recuperados")
 
 datacovid19_por_dia_Spain
 
@@ -118,6 +119,7 @@ g2 + geom_line(aes(x=Date, y=Confirmados), color="blue") +
   labs(x = "Fecha", y="Confirmados") + 
   ggtitle("COVID-19 en España - Casos confirmados", "Acumulados") + 
   theme_grey() + 
+  scale_y_continuous(labels = scales::comma) +
   theme( axis.title = element_text(size = 10, face = "bold") )
 
 
@@ -141,7 +143,8 @@ datacovid19_por_dia_China <- convertir_a_fecha(datacovid19_por_dia_China)
 datacovid19_por_dia_China <- datacovid19_por_dia_China %>%
     group_by(año, mes) %>%
     arrange(año) %>%
-    summarise(Confirmed = tail(Confirmed,1))
+    summarise_at(c("Confirmed"), max)
+
   
 g4 <- ggplot(datacovid19_por_dia_China,aes(x=interaction(mes,año), y=Confirmed))
 g4 + geom_bar(stat="identity", fill="lightblue", colour="black") +
@@ -156,13 +159,14 @@ theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
 
 ### 3. Obtener una tabla con los los 20 paises con más fallecimientos y visualizar:
 ```{r}
-fallecidos_totales_por_pais <- datacovid19_por_dia%>%
-  group_by(`Country/Region`)%>%
-  summarise_at(c("Confirmed", "Deaths", "Recovered"), max)%>%
-  arrange(desc(Deaths))%>%
+fallecidos_totales_por_pais <- datacovid19_por_dia %>%
+  group_by(`Country/Region`) %>%
+  summarise_at(c("Confirmed", "Deaths", "Recovered"), max) %>%
+  arrange(desc(Deaths)) %>%
   filter(row_number()<=20)
 
 fallecidos_totales_por_pais
+
 ```
 
 
@@ -213,18 +217,18 @@ datacovid19_por_dia2 <- datacovid19_por_dia %>%
   filter(`Country/Region` %in% fallecidos_totales_por_pais$`Country/Region`) %>%
   convertir_a_fecha() %>%
   group_by(`Country/Region`) %>%
-  arrange(ObservationDate, `Country/Region`)
+  arrange(`Country/Region`, ObservationDate)
   
 
 g8 <- ggplot(datacovid19_por_dia2, aes(x=ObservationDate, y=Deaths, group=`Country/Region`)) +
       geom_line(aes(color = `Country/Region`))  + 
       #facet_wrap(~`Country/Region`, ncol = 5) + 
       theme_minimal() + 
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5), axis.title = element_text(size = 15, face = "bold") ) +
-      ggtitle("20 paises con mas fallecidos acumulados") +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5), axis.title = element_text(size = 13, face = "bold") ) +
+      ggtitle("20 paises con mas fallecidos acumulados", "Evolución de los fallecidos") +
       labs(x = "Fecha", y="Fallecidos") +
       scale_y_continuous(labels = scales::comma, breaks = seq(50000,750000, by=100000 ))
-
+      
 g8
 
 
@@ -238,42 +242,57 @@ g9 <- ggplot(datacovid19_por_dia2, aes(x=ObservationDate, y=Confirmed, group=`Co
       geom_line(aes(color = `Country/Region`))  + 
       #facet_wrap(~`Country/Region`, ncol = 5) + 
       theme_minimal() + 
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5), axis.title = element_text(size = 15, face = "bold") ) +
-      ggtitle("20 paises con mas fallecidos acumulados", "Contagios confirmados") +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5), axis.title = element_text(size = 13, face = "bold") ) +
+      ggtitle("20 paises con mas fallecidos acumulados", "Evolución de los contagios confirmados") +
       labs(x = "Fecha", y="Contagios") +
       scale_y_continuous(labels = scales::comma, breaks = seq(5000000,50000000, by=5000000 ))
 
 g9
+
 ```
 
 
 
 
-#prueba
+### 4. Apartado libre
+
+
+#### Evolución de las muertes por Covid19 en España durante el principio de la misma y el efecto de la cuarentena domiciliaria.
 ```{r}
-pr <- datacovid19_por_dia_Spain %>%
+#Filtramos los datos hasta el primer dia de Junio (no incluido)
+covid_dia_spain_noAcuml <- datacovid19_por_dia_Spain %>%
   filter(Date < "2020-06-01")
 
-length(pr$Fallecimientos)
+#Añado nueva columna para llevar la cuenta de muertes por dia (no acumulada)
+covid_dia_spain_noAcuml$FallNoAcuml <- 0
 
-pr$prueba <- 0
+#Calculo el numero de muertes por dia
+for(i in 2:length(covid_dia_spain_noAcuml$Fallecimientos)) {
+  
+  covid_dia_spain_noAcuml $FallNoAcuml[i] = 
+                    covid_dia_spain_noAcuml$Fallecimientos[i] - 
+                    covid_dia_spain_noAcuml$Fallecimientos[i-1]
 
-for(i in 2:length(pr$Fallecimientos)) {
-  
-  pr$prueba[i] = pr$Fallecimientos[i]-pr$Fallecimientos[i-1]
-  
 }
 
-g1 <- ggplot(pr)
-g1 + geom_line(aes(x=Date, y=prueba), color="red") + 
+#Me deshago de los valores negativos (esto ocurre cuando en la cuenta acumulada de muertes, se han contabilizado erroneamente menos numeros que el real y lo corriguen luego)
+covid_dia_spain_noAcuml  <- covid_dia_spain_noAcuml  %>%
+                            filter(FallNoAcuml > 0)
+
+g1 <- ggplot(covid_dia_spain_noAcuml )
+g1 + geom_line(aes(x=Date, y=FallNoAcuml), color="red") + 
   labs(x = "Fecha", y="Fallecimientos") + 
-  ggtitle("COVID-19 en España - Defunciones") + 
+  ggtitle("COVID-19 en España - Defunciones cada día") + 
   theme_clean() + 
-  theme( axis.title = element_text(size = 10, face = "bold") )
+  theme( axis.title = element_text(size = 10, face = "bold") ) +
+  geom_smooth(aes(x=Date, y=FallNoAcuml)) +
+  scale_y_continuous(breaks = seq(0,2000, by=200 ))
 
+#Podemos observar como a mitades de Marzo el covid19 hizo una mayor presencia, disparando las muertes por dicho virus de manera exponencial, llegando al pico a principios de Abril.
+#Tras la medida tomada por el gobierno del confinamiento domiciliario, ¿qué efecto tuvo esto con respecto las muertes por covid19?
+#Podemos ver como a partir de principios de Abril, las muertes sufren un descenso importante, haciendo que la curva de fallecimientos vaya bajando y se controle la situación hospitalaria.
+#Conclusión: El confinamiento ha resultado ser una medida muy acertada, a pesar de que provocó ciertas situaciones sociales y psicológicas para la población española. Minimizar las muertes era clave para qué, los hospitales tuvieran menos carga de trabajo y, el efecto tras el covid19 sean los menores posibles.
 
-  
-  
 ```
 
 
