@@ -16,9 +16,9 @@ En este documento preprocesaremos, analizaremos y visualizaremos datos sobre el 
 
 ## ------------------------ Paso 1 --> Preprocesado ------------------------ ##
 
-#1. Paquetes y librerias que vamos a utilizar. Importamos dataset covid_19_data.csv
-```{r}
-install.packages("ggthemes")
+### 1. Paquetes y librerias que vamos a utilizar. Importamos dataset covid_19_data.csv
+```{r message=FALSE, warning=FALSE}
+#install.packages("ggthemes")
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
@@ -29,7 +29,7 @@ covid_19_data <- read_csv("covid_19_data.csv")
 
 ```
 
-#2. Seleccion de columnas y primeras transformaciones
+### 2. Seleccion de columnas y primeras transformaciones
 ```{r}
 #Solo nos quedamos con las columnas 'ObservationDate', 'Country/Region', 'Confirmed', 'Deaths' y 'Recovery'
 datacovid19 <- covid_19_data %>%
@@ -53,7 +53,7 @@ datacovid19_por_dia <- datacovid19 %>%
 
 ```
 
-#3.Conversión de la columna 'ObservationDate' en columna llamada 'Date' (tipo Date). Obtener los datos del covid en España
+### 3.Conversión de la columna 'ObservationDate' en columna llamada 'Date' (tipo Date). Obtener los datos del covid en España
 ```{r}
 #Esta función separa el dia, mes y año y convierte 'ObservationDate' a tipo Date. Devuelve el dataset con dicha columna ya convertida y las columnas extras
 convertir_a_fecha <- function(ds){
@@ -103,7 +103,7 @@ datacovid19_por_dia_Spain
 
 ## ------------------------ Paso 2 --> Visualización ------------------------ ##
 
-#1. Visualizar las defunciones, los casos confirmados, y los recuperados por día en España (acumulados)
+### 1. Visualizar las defunciones, los casos confirmados, y los recuperados por día en España (acumulados)
 ```{r}
 g1 <- ggplot(datacovid19_por_dia_Spain)
 g1 + geom_line(aes(x=Date, y=Fallecimientos), color="red") + 
@@ -129,7 +129,7 @@ g3 + geom_line(aes(x=Date, y=Recuperados), color="green") +
 
 ```
 
-#2. Visualizar los casos acumulados en cada mes desde que comenzó la pandemia en China.
+### 2. Visualizar los casos acumulados en cada mes desde que comenzó la pandemia en China.
 ```{r}
 datacovid19_por_dia_China <- datacovid19_por_dia %>%
                             filter( `Country/Region`=="China" )
