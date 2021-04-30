@@ -185,7 +185,7 @@ g5
 
 
 g6 <- ggplot(fallecidos_totales_por_pais,aes(x=`Country/Region`, y=Confirmed)) +
-      geom_bar(stat="identity", fill="red", colour="black") + 
+      geom_bar(stat="identity", fill="blue", colour="black") + 
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5), 
       axis.title = element_text(size = 12, face = "bold") ) +
       ggtitle("20 paises con mas fallecidos acumulados", "Casos confirmados") +
@@ -197,7 +197,7 @@ g6
 
 
 g7 <- ggplot(fallecidos_totales_por_pais,aes(x=`Country/Region`, y=Recovered)) +
-      geom_bar(stat="identity", fill="red", colour="black") + 
+      geom_bar(stat="identity", fill="green", colour="black") + 
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5), 
       axis.title = element_text(size = 12, face = "bold") ) + 
       ggtitle("20 paises con mas fallecidos acumulados", "Recuperados") +
@@ -315,7 +315,7 @@ g10 <- ggplot(datoscovidProvinciasAcumulado, aes(x=ObservationDate, y=Confirmed,
       facet_wrap(~`Province/State`, ncol = 5) + 
       theme_minimal() + 
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5), axis.title = element_text(size = 13, face = "bold") ) +
-      ggtitle("Contagios confirmados acumulados por comunidad autonoma", "Evolución de los contagios confirmados") +
+      ggtitle("Contagios confirmados acumulados por CA", "Evolución de los contagios confirmados") +
       labs(x = "Fecha", y="Contagios") +
       scale_y_continuous(labels = scales::comma, breaks = seq(50000,800000, by=200000 ))
 
@@ -326,7 +326,7 @@ g11 <- ggplot(datoscovidProvinciasAcumulado, aes(x=ObservationDate, y=Deaths, gr
       facet_wrap(~`Province/State`, ncol = 5) + 
       theme_minimal() + 
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5), axis.title = element_text(size = 13, face = "bold") ) +
-      ggtitle("Fallecidos acumulados por comunidad autonoma", "Evolución de los fallecidos") +
+      ggtitle("Fallecidos acumulados por CA", "Evolución de los fallecidos") +
       labs(x = "Fecha", y="Fallecidos") +
       scale_y_continuous(labels = scales::comma, breaks = seq(1000,15000, by=4000 ))
 
@@ -346,7 +346,7 @@ fallecidos_totales_por_CC <- datoscovidProvincias %>%
 
 
 g12 <- ggplot(fallecidos_totales_por_CC, aes(x=`Province/State`, y=Confirmed)) +
-      geom_bar(stat="identity", fill="red", colour="black") + 
+      geom_bar(stat="identity", fill="blue", colour="black") + 
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5), 
       axis.title = element_text(size = 12, face = "bold") ) + 
       ggtitle("Casos de covid totales en cada Comunidad autonoma") +
